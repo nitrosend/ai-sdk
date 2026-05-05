@@ -170,7 +170,7 @@ Before submitting to the [AI SDK Tools Registry](https://ai-sdk.dev/tools-regist
    plus pre-publish checklist — lives next to this README in the source
    repo as `VERCEL_TOOLS_REGISTRY.md` (it is intentionally not shipped to
    npm; view it on GitHub at
-   [github.com/nitrosend/nitrosend/blob/main/ai-sdk/VERCEL_TOOLS_REGISTRY.md](https://github.com/nitrosend/nitrosend/blob/main/ai-sdk/VERCEL_TOOLS_REGISTRY.md)).
+   [github.com/nitrosend/ai-sdk/blob/main/VERCEL_TOOLS_REGISTRY.md](https://github.com/nitrosend/ai-sdk/blob/main/VERCEL_TOOLS_REGISTRY.md)).
 4. The full Vercel Marketplace distribution (one-click installs from
    Vercel, secret rotation, billing) is tracked separately in the
    companion `vercel-marketplace-native-integration` spec — that work is
