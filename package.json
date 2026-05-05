@@ -1,6 +1,6 @@
 {
   "name": "@nitrosend/ai-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vercel AI SDK tools for Nitrosend, backed by the remote Nitrosend MCP server",
   "license": "MIT",
   "type": "module",
@@ -28,13 +28,13 @@
   },
   "peerDependencies": {
     "@ai-sdk/mcp": "^1.0.0",
-    "ai": "^6.0.0",
+    "ai": "^7.0.0-0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@ai-sdk/mcp": "^1.0.39",
     "@types/node": "^22",
-    "ai": "^6.0.174",
+    "ai": "^7.0.0-beta",
     "tsx": "^4.19.2",
     "typescript": "^5.6.0",
     "zod": "^4.0.0"

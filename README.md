@@ -36,12 +36,12 @@ Get an API key from **Settings → API Keys** in the Nitrosend dashboard.
 
 ## 2. Quickstart
 
-`generateText` (one-shot completion). `stopWhen: stepCountIs(N)` lets the
+`generateText` (one-shot completion). `stopWhen: isStepCount(N)` lets the
 model take a follow-up step after a tool call so the final summary text
 gets back to you — without it, AI SDK stops after the first tool result:
 
 ```ts
-import { generateText, stepCountIs } from 'ai';
+import { generateText, isStepCount } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { withNitrosendTools } from '@nitrosend/ai-sdk';
 
@@ -49,7 +49,7 @@ const result = await withNitrosendTools({}, async ({ tools }) => {
   return generateText({
     model: openai('gpt-4o'),
     tools,
-    stopWhen: stepCountIs(5),
+    stopWhen: isStepCount(5),
     prompt: 'Send a welcome email to founder@acme.com from our team.',
   });
 });
@@ -60,7 +60,7 @@ console.log(result.text);
 `streamText` (token-stream UI):
 
 ```ts
-import { streamText, stepCountIs } from 'ai';
+import { streamText, isStepCount } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { withNitrosendTools } from '@nitrosend/ai-sdk';
 
@@ -68,7 +68,7 @@ await withNitrosendTools({}, async ({ tools }) => {
   const stream = streamText({
     model: openai('gpt-4o'),
     tools,
-    stopWhen: stepCountIs(5),
+    stopWhen: isStepCount(5),
     prompt: 'Find the founder@acme.com contact and add them to the "Power users" list.',
   });
 

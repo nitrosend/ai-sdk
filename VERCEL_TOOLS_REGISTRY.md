@@ -34,7 +34,7 @@ Add this object to `content/tools-registry/registry.ts`:
     yarn: 'yarn add @nitrosend/ai-sdk ai @ai-sdk/mcp zod @ai-sdk/openai',
     bun: 'bun add @nitrosend/ai-sdk ai @ai-sdk/mcp zod @ai-sdk/openai',
   },
-  codeExample: `import { generateText, stepCountIs } from 'ai';
+  codeExample: `import { generateText, isStepCount } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { withNitrosendTools } from '@nitrosend/ai-sdk';
 
@@ -46,7 +46,7 @@ const result = await withNitrosendTools({}, async ({ tools }) => {
     tools: tools,
     // Allow follow-up steps after the model invokes a Nitrosend tool so
     // the final summary text reaches the caller.
-    stopWhen: stepCountIs(5),
+    stopWhen: isStepCount(5),
     prompt: 'Send a welcome email to founder@acme.com from our team.',
   });
 });
