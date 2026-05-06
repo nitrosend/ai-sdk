@@ -15,6 +15,11 @@ export const nitrosendToolSchemas = {
     design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
+    draft_meta: z.object({
+      creative_route_id: z.string().describe("Chosen composition_contract.creative_routes[].id").optional(),
+      concrete_anchor: z.string().describe("Specific proof, product detail, visual, code/output, quote, number, or brand moment used.").optional(),
+      why_this_earns_the_inbox: z.string().describe("One sentence explaining the creative move.").optional()
+    }).passthrough().describe("Host-composed draft metadata from composition_contract: creative_route_id, concrete_anchor, why_this_earns_the_inbox.").optional(),
     subject: z.string().describe("Email subject line (email campaigns)").optional(),
     preheader: z.string().describe("Email preheader (email campaigns)").optional(),
     from_name: z.string().describe("Sender name override").optional(),
@@ -45,6 +50,11 @@ export const nitrosendToolSchemas = {
     design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
+    draft_meta: z.object({
+      creative_route_id: z.string().describe("Chosen composition_contract.creative_routes[].id").optional(),
+      concrete_anchor: z.string().describe("Specific proof, product detail, visual, code/output, quote, number, or brand moment used.").optional(),
+      why_this_earns_the_inbox: z.string().describe("One sentence explaining the creative move.").optional()
+    }).passthrough().describe("Host-composed draft metadata from composition_contract: creative_route_id, concrete_anchor, why_this_earns_the_inbox.").optional(),
     trigger: z.object({
       event: z.string().describe("Trigger event name. Built-in: contact_add, contact_enriched, keyword, message, list_add, list_remove, product_view, checkout, cart_add, cart_remove, cart_abandoned, browse_abandoned. Custom: any lowercase alphanumeric with underscores (e.g. order_confirmed, password_reset).").optional(),
       segment_id: z.number().int().describe("Optional segment filter on trigger").optional(),
@@ -169,6 +179,11 @@ export const nitrosendToolSchemas = {
     design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
+    draft_meta: z.object({
+      creative_route_id: z.string().describe("Chosen composition_contract.creative_routes[].id").optional(),
+      concrete_anchor: z.string().describe("Specific proof, product detail, visual, code/output, quote, number, or brand moment used.").optional(),
+      why_this_earns_the_inbox: z.string().describe("One sentence explaining the creative move.").optional()
+    }).passthrough().describe("Host-composed draft metadata from composition_contract: creative_route_id, concrete_anchor, why_this_earns_the_inbox.").optional(),
     preheader: z.string().describe("Email preheader text shown in inbox preview").optional(),
     from_name: z.string().describe("Sender name (falls back to account default)").optional(),
     from_email: z.string().describe("Sender email (falls back to account default)").optional(),
