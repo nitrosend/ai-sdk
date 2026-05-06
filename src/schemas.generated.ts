@@ -6,9 +6,15 @@ import { z } from 'zod';
 
 export const nitrosendToolSchemas = {
   nitro_compose_campaign: z.object({
-    name: z.string().describe("Campaign name"),
+    name: z.string().describe("Campaign name").optional(),
     channel: z.enum(["email", "sms"]).default("email").describe("Auto-detected as 'email' when sections or template_id provided. Set explicitly to 'sms' for SMS campaigns."),
-    goal: z.string().describe("Goal string for AI generation (Phase 5C — feature gated)").optional(),
+    goal: z.string().describe("Goal string for host-composed campaign composition contracts").optional(),
+    composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
+    contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
+    validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
+    user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     subject: z.string().describe("Email subject line (email campaigns)").optional(),
     preheader: z.string().describe("Email preheader (email campaigns)").optional(),
     from_name: z.string().describe("Sender name override").optional(),
@@ -29,16 +35,22 @@ export const nitrosendToolSchemas = {
     idempotency_key: z.string().describe("Optional deduplication key").optional()
   }).strict(),
   nitro_compose_flow: z.object({
-    name: z.string().describe("Flow name (required for create mode)"),
+    name: z.string().describe("Flow name (required for create mode)").optional(),
     mode: z.enum(["create", "replace", "patch"]).default("create").describe("create: new flow; replace: rebuild existing flow graph; patch: metadata only"),
     flow_id: z.number().int().describe("Required for replace/patch modes").optional(),
-    goal: z.string().describe("Goal string for AI generation (Phase 5C — feature gated)").optional(),
+    goal: z.string().describe("Goal string for host-composed flow composition contracts").optional(),
+    composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
+    contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
+    validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
+    user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     trigger: z.object({
       event: z.string().describe("Trigger event name. Built-in: contact_add, contact_enriched, keyword, message, list_add, list_remove, product_view, checkout, cart_add, cart_remove, cart_abandoned, browse_abandoned. Custom: any lowercase alphanumeric with underscores (e.g. order_confirmed, password_reset).").optional(),
       segment_id: z.number().int().describe("Optional segment filter on trigger").optional(),
       contact_list_id: z.number().int().describe("Optional contact list for audience targeting").optional(),
       data: z.object({}).passthrough().describe("Event-specific config (e.g. {keywords: ['STOP']})").optional()
-    }).passthrough(),
+    }).passthrough().optional(),
     steps: z.array(z.object({
       type: z.enum(["email", "sms", "wait", "split", "emit_event", "webhook", "subscribe", "unsubscribe"]),
       subject: z.string().describe("Email subject line (email steps)").optional(),
@@ -65,14 +77,14 @@ export const nitrosendToolSchemas = {
       yes: z.array(z.object({}).passthrough()).describe("Steps for yes branch (split steps, NO nested splits)").optional(),
       no: z.array(z.object({}).passthrough()).describe("Steps for no branch (split steps, NO nested splits)").optional(),
       channel: z.enum(["phone", "email", "all"]).default("phone").describe("Channel for subscribe/unsubscribe steps")
-    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, transactional (boolean), bcc (string, optional BCC email address)\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). NO nested splits.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact."),
+    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, transactional (boolean), bcc (string, optional BCC email address)\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). NO nested splits.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact.").optional(),
     dry_run: z.boolean().default(false).describe("Preview graph without persisting"),
     idempotency_key: z.string().describe("Deduplication key for retry safety").optional(),
     confirm: z.boolean().default(false).describe("Required for replace mode")
   }).strict(),
   nitro_configure_account: z.object({
     from_name: z.string().describe("Sender display name (e.g. 'Acme Marketing')").optional(),
-    from_email: z.string().describe("Sender email address (must match a verified domain)").optional(),
+    from_email: z.string().describe("Visible From address. May use the apex domain when an aligned sending subdomain authorizes it.").optional(),
     reply_to: z.string().describe("Reply-to email address").optional(),
     test_email_recipients: z.array(z.email()).max(5).describe("Saved email addresses for test sends (max 5). Pass empty array to clear.").optional()
   }).strict(),
@@ -121,6 +133,11 @@ export const nitrosendToolSchemas = {
     dry_run: z.boolean().default(false).describe("Preview import without persisting (default: false)"),
     idempotency_key: z.string().describe("Optional deduplication key").optional()
   }).strict(),
+  nitro_ingest_image: z.object({
+    image_data: z.string().describe("Image payload as raw base64 bytes or a full data URL. PNG, JPEG, or WebP only; decoded size must be under 10MB.").optional(),
+    filename: z.string().describe("Original filename for the image, such as hero.png or product-shot.jpg.").optional(),
+    content_type: z.string().describe("Optional MIME type hint when image_data is raw base64 rather than a data URL.").optional()
+  }).strict(),
   nitro_manage_audience: z.object({
     operation: z.enum(["create_contact", "set_subscription", "manage_list", "record_event", "delete_segment", "bulk_tag"]).describe("Which audience operation to perform. Each operation expects specific params:\n\n- **create_contact** — params: {email (string), phone (string), opt_in (boolean, recommended: true), attributes: {first_name, last_name, country_code, source}}\n- **set_subscription** — params: {contact_id (required), kind: \"email\"|\"phone\" (required), opt_in (boolean), opt_out (boolean), unsubscribe_all (boolean)}. Value auto-resolved from contact.\n- **manage_list** — params: {action: \"create\"|\"rename\"|\"delete\"|\"add_contacts\"|\"remove_contacts\" (required), list_id (integer), name (string), contact_ids (integer[]) or emails (string[])}\n- **record_event** — params: {contact_id or contact_email (one required), event (required, custom names allowed e.g. order_confirmed), data (object, max 32KB), resource_uid, resource_name, resource_url, amount}\n- **delete_segment** — params: {segment_id (required), force (boolean)}. Requires confirm: true.\n- **bulk_tag** — params: {contact_ids (integer[], required), tags (string[], required), tag_action: \"add\"|\"remove\"|\"set\" (default: \"add\")}"),
     params: z.object({}).passthrough().describe("Operation-specific parameters. See operation description for required/optional fields."),
@@ -135,9 +152,10 @@ export const nitrosendToolSchemas = {
     }).strict().describe("Operation-specific parameters.").optional()
   }).strict(),
   nitro_manage_domains: z.object({
-    operation: z.enum(["add", "verify", "check_dns", "list", "remove"]).describe("Which domain operation to perform:\n\n- **add** — params: {domain_name (required, e.g. \"send.acme.com\")}. Registers domain with email provider and returns DNS records. The user must add these DNS records at their domain registrar. Idempotent: calling add on a pending domain re-returns the DNS records.\n- **verify** — params: {domain_name (required)}. Checks with the email provider if the core DNS records have propagated. Also runs independent DNS validation and returns per-record dns_health. Optional records like tracking are reported separately and do not block completion. If verified, completes the domain_verified onboarding step and unlocks sending. If still pending, returns the DNS records again so you can re-show them to the user.\n- **check_dns** — params: {domain_name (required)}. Runs independent DNS validation only. Does not call the email provider. Useful for diagnosing missing or incorrect customer-facing records and Nitro-managed delegate targets before verify. Optional improvements are surfaced without blocking setup completion.\n- **list** — no params needed. Returns all account domains with their verification status and DNS records. Includes dns_health, dmarc_policy, domain_limit (from tier), and domains_used count.\n- **remove** — params: {domain_name (required)}. Deletes the domain. Requires confirm: true."),
+    operation: z.enum(["add", "verify", "check_dns", "list", "remove"]).describe("Which domain operation to perform:\n\n- **add** — params: {domain_name (required, e.g. \"send.acme.com\"), author_domain (optional, e.g. \"acme.com\")}. Registers the technical sending domain with the email provider and returns DNS records. Managed SES also prepares the aligned visible From domain when the sending domain is a subdomain. Idempotent: calling add on a pending domain re-returns the DNS records.\n- **verify** — params: {domain_name (required)}. Checks with the email provider if the core DNS records have propagated. Also runs independent DNS validation and returns per-record dns_health. Optional records like tracking are reported separately and do not block completion. If verified, completes the domain_verified onboarding step and unlocks sending. If still pending, returns the DNS records again so you can re-show them to the user.\n- **check_dns** — params: {domain_name (required)}. Runs independent DNS validation only. Does not call the email provider. Useful for diagnosing missing or incorrect customer-facing records and Nitro-managed delegate targets before verify. Optional improvements are surfaced without blocking setup completion.\n- **list** — no params needed. Returns all account domains with their verification status and DNS records. Includes dns_health, dmarc_policy, domain_limit (from tier), and domains_used count.\n- **remove** — params: {domain_name (required)}. Deletes the domain. Requires confirm: true."),
     params: z.object({
-      domain_name: z.string().describe("Domain to manage (e.g. 'send.acme.com'). Required for add, verify, remove.").optional()
+      domain_name: z.string().describe("Technical sending domain to manage (e.g. 'send.acme.com'). Required for add, verify, remove.").optional(),
+      author_domain: z.string().describe("Optional visible From domain to authorize for managed SES (e.g. 'acme.com'). Must be the organizational domain of domain_name.").optional()
     }).strict().describe("Operation-specific parameters.").optional(),
     confirm: z.boolean().default(false).describe("Required for remove operation (destructive)")
   }).strict(),
@@ -145,6 +163,12 @@ export const nitrosendToolSchemas = {
     sections: z.array(z.object({}).passthrough()).describe("Array of section objects: {type, props, styles?}. Read nitro://schema for full prop specs.\n\nSection types and key props:\n\n- **header** — {logo_url, logo_alt, logo_width, background_color}\n- **text** — {content (HTML string)}\n- **image** — {src, alt, href, width}\n- **button** — {text, href, background_color, text_color, align, border_radius}\n- **columns** — {columns: [{width, sections: [...]}]} — nested sections inside columns\n- **product** — {name, price, image_url, href, description}\n- **social** — {links: [{platform, url}], align}\n- **divider** — {color, width, padding}\n- **spacer** — {height}\n- **footer** — {company_name, address, unsubscribe_text}").optional(),
     subject: z.string().describe("Email subject line (recommended under 60 chars)").optional(),
     name: z.string().describe("Template display name").optional(),
+    composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
+    contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
+    validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
+    user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     preheader: z.string().describe("Email preheader text shown in inbox preview").optional(),
     from_name: z.string().describe("Sender name (falls back to account default)").optional(),
     from_email: z.string().describe("Sender email (falls back to account default)").optional(),
@@ -153,7 +177,7 @@ export const nitrosendToolSchemas = {
     template_id: z.number().int().describe("Template ID for update mode — provide with fields to change").optional(),
     based_on: z.number().int().describe("Source template ID for clone mode — creates a copy").optional(),
     if_version: z.number().int().describe("Optimistic concurrency — rejects update if template version mismatches").optional(),
-    goal: z.string().describe("Goal-driven composition (Phase 5 — not yet available)").optional(),
+    goal: z.string().describe("Goal string for host-composed template composition contracts").optional(),
     dry_run: z.boolean().default(false).describe("Validate and preview without persisting"),
     idempotency_key: z.string().describe("Dedup key — same key returns cached result").optional()
   }).strict(),
