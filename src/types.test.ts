@@ -9,37 +9,36 @@ import {
 } from './index.js';
 
 test('NitrosendToolInput exposes per-tool input shape', () => {
-  type SendInput = NitrosendToolInput<'nitro_send_message'>;
+  type CampaignInput = NitrosendToolInput<'nitro_compose_campaign'>;
   // Compile-time: parsing a valid payload yields the expected fields.
-  const parsed: SendInput = nitrosendToolSchemas.nitro_send_message.parse({
+  const parsed: CampaignInput = nitrosendToolSchemas.nitro_compose_campaign.parse({
     channel: 'email',
-    to: 'a@b.com',
     subject: 'Hi',
   });
   assert.equal(parsed.channel, 'email');
-  assert.equal(parsed.to, 'a@b.com');
+  assert.equal(parsed.subject, 'Hi');
 });
 
 test('NarrowedNitrosendTools restricts keys to the requested subset', () => {
-  type Subset = NarrowedNitrosendTools<['nitro_get_status', 'nitro_send_message']>;
+  type Subset = NarrowedNitrosendTools<['nitro_get_status', 'nitro_compose_campaign']>;
   // @ts-expect-error — nitro_compose_flow not in the subset
   const _missing: Subset = { nitro_compose_flow: undefined } as never;
   // Sanity that accepted keys compile.
-  const accepted: Pick<Subset, 'nitro_get_status' | 'nitro_send_message'> = {
+  const accepted: Pick<Subset, 'nitro_get_status' | 'nitro_compose_campaign'> = {
     nitro_get_status: undefined as never,
-    nitro_send_message: undefined as never,
+    nitro_compose_campaign: undefined as never,
   };
   assert.ok(accepted);
 });
 
 test('pickNitrosendToolSchemas returns the inputSchema-shaped record', () => {
-  const picked = pickNitrosendToolSchemas('nitro_get_status', 'nitro_send_message');
+  const picked = pickNitrosendToolSchemas('nitro_get_status', 'nitro_compose_campaign');
   assert.ok(picked.nitro_get_status.inputSchema instanceof z.ZodObject);
-  assert.ok(picked.nitro_send_message.inputSchema instanceof z.ZodObject);
+  assert.ok(picked.nitro_compose_campaign.inputSchema instanceof z.ZodObject);
   // Subset should not include unrequested tools.
   assert.equal(
     Object.keys(picked).sort().join(','),
-    ['nitro_get_status', 'nitro_send_message'].sort().join(','),
+    ['nitro_get_status', 'nitro_compose_campaign'].sort().join(','),
   );
 });
 

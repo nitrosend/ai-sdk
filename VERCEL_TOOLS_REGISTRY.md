@@ -24,7 +24,7 @@ Add this object to `content/tools-registry/registry.ts`:
 {
   slug: 'nitrosend',
   name: 'Nitrosend',
-  description: 'Nitrosend tools for Vercel AI SDK agents — send email and SMS, manage contacts and segments, build flows, run campaigns. Backed by the Nitrosend remote MCP server.',
+  description: 'Nitrosend tools for Vercel AI SDK agents — draft campaigns, send tests, manage contacts and segments, build flows, and review delivery. Backed by the Nitrosend remote MCP server.',
   packageName: '@nitrosend/ai-sdk',
   tags: ['email', 'sms', 'marketing', 'mcp', 'automation', 'crm'],
   apiKeyEnvName: 'NITROSEND_API_KEY',
@@ -47,7 +47,7 @@ const result = await withNitrosendTools({}, async ({ tools }) => {
     // Allow follow-up steps after the model invokes a Nitrosend tool so
     // the final summary text reaches the caller.
     stopWhen: isStepCount(5),
-    prompt: 'Send a welcome email to founder@acme.com from our team.',
+    prompt: 'Draft a welcome campaign for the Newsletter list from our team.',
   });
 });
 

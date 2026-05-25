@@ -12,7 +12,7 @@ export const nitrosendToolSchemas = {
     composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
     contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
     validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
-    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "utility_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     draft_meta: z.object({
@@ -47,7 +47,7 @@ export const nitrosendToolSchemas = {
     composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
     contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
     validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
-    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "utility_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     draft_meta: z.object({
@@ -70,7 +70,6 @@ export const nitrosendToolSchemas = {
       from_email: z.string().describe("Sender email override (email steps)").optional(),
       reply_to: z.string().describe("Reply-to override (email steps)").optional(),
       design: z.object({}).passthrough().describe("Email design: { sections: [...], theme: {...} }").optional(),
-      transactional: z.boolean().default(false).describe("Mark email as transactional. Skips subscription check, CAN-SPAM footer, warmup, List-Unsubscribe, and tracking. Use for receipts, password resets, etc."),
       bcc: z.string().describe("Optional BCC email address. A copy of each email sent by this step will be blind-copied to this address.").optional(),
       duration: z.number().int().describe("Wait duration in seconds (wait steps)").optional(),
       event_name: z.string().describe("Event name to fire (emit_event steps). Lowercase alphanumeric with underscores.").optional(),
@@ -87,7 +86,7 @@ export const nitrosendToolSchemas = {
       yes: z.array(z.object({}).passthrough()).describe("Steps for yes branch (split steps, NO nested splits)").optional(),
       no: z.array(z.object({}).passthrough()).describe("Steps for no branch (split steps, NO nested splits)").optional(),
       channel: z.enum(["phone", "email", "all"]).default("phone").describe("Channel for subscribe/unsubscribe steps")
-    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, transactional (boolean), bcc (string, optional BCC email address)\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). NO nested splits.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact.").optional(),
+    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, bcc (string, optional BCC email address)\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). NO nested splits.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact.").optional(),
     dry_run: z.boolean().default(false).describe("Preview graph without persisting"),
     idempotency_key: z.string().describe("Deduplication key for retry safety").optional(),
     confirm: z.boolean().default(false).describe("Required for replace mode")
@@ -176,7 +175,7 @@ export const nitrosendToolSchemas = {
     composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
     contract_id: z.string().describe("Email composition contract id returned from composition_mode=intent.").optional(),
     validate_only: z.boolean().default(false).describe("Alias for composition_mode=validate. Does not persist or consume repair attempts."),
-    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "transactional_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
+    design_mode_override: z.enum(["premium_rich", "premium_minimal", "founder_letter", "utility_plain"]).describe("Renegotiate/validate the draft under a different design mode.").optional(),
     renegotiate: z.boolean().default(false).describe("When true with design_mode_override, keeps the same contract but changes the design mode."),
     user_instruction: z.string().describe("Latest user instruction to preserve inside the composition contract.").optional(),
     draft_meta: z.object({
@@ -216,16 +215,6 @@ export const nitrosendToolSchemas = {
     mode: z.enum(["summary", "profile"]).describe("summary = list, profile = single contact detail (default: summary)").optional(),
     page: z.number().int().describe("Page number (default 1)").optional(),
     per: z.number().int().describe("Results per page (max 50, default 25)").optional()
-  }).strict(),
-  nitro_send_message: z.object({
-    channel: z.enum(["email", "sms"]).describe("Delivery channel"),
-    to: z.string().describe("Recipient email address or E.164 phone number"),
-    subject: z.string().describe("Email subject line (required for email)").optional(),
-    body: z.string().describe("Message body. Required for SMS. Optional plain text for email.").optional(),
-    template_id: z.number().int().describe("Load email design from an existing template (email only)").optional(),
-    data: z.object({}).passthrough().describe("Merge variables e.g. { order_id: 123, name: 'Alice' }").optional(),
-    idempotency_key: z.string().describe("Prevents duplicate sends on retry").optional(),
-    dry_run: z.boolean().default(false).describe("Validate and preview without sending")
   }).strict(),
   nitro_send_test_message: z.object({
     target_type: z.enum(["template", "flow", "campaign"]).describe("Target entity type. Use with target_id unless latest_campaign or template_id is used.").optional(),

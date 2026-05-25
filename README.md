@@ -1,9 +1,9 @@
 # @nitrosend/ai-sdk
 
 Vercel AI SDK tools for [Nitrosend](https://nitrosend.com) — the multi-channel
-marketing platform. Drops Nitrosend's 21 MCP tools (send email, manage
-contacts, build flows, run campaigns, …) into `generateText`, `streamText`,
-and agent loops.
+marketing platform. Drops Nitrosend's 21 MCP tools (draft campaigns, manage
+contacts, build flows, send tests, …) into `generateText`, `streamText`, and
+agent loops.
 
 This package is a thin, typed wrapper over Nitrosend's remote MCP server. It
 ships the Nitrosend tool surface for AI SDK developers — it is **not** a
@@ -52,7 +52,7 @@ const result = await withNitrosendTools({}, async ({ tools }) => {
     model: openai('gpt-4o'),
     tools,
     stopWhen: isStepCount(5),
-    prompt: 'Send a welcome email to founder@acme.com from our team.',
+    prompt: 'Draft a welcome campaign for the Newsletter list from our team.',
   });
 });
 
@@ -115,9 +115,9 @@ own `try/finally`) so the transport closes:
 import { withNitrosendTools } from '@nitrosend/ai-sdk';
 
 await withNitrosendTools(
-  { tools: ['nitro_get_status', 'nitro_send_message'] },
+  { tools: ['nitro_get_status', 'nitro_compose_campaign'] },
   async ({ tools }) => {
-    // tools is typed as { nitro_get_status: …; nitro_send_message: … }
+    // tools is typed as { nitro_get_status: …; nitro_compose_campaign: … }
   },
 );
 ```
@@ -131,7 +131,7 @@ import { createNitrosendMCPClient, pickNitrosendToolSchemas } from '@nitrosend/a
 const client = await createNitrosendMCPClient();
 try {
   const tools = await client.tools({
-    schemas: pickNitrosendToolSchemas('nitro_compose_flow', 'nitro_send_message'),
+    schemas: pickNitrosendToolSchemas('nitro_compose_flow', 'nitro_send_test_message'),
   });
   // …use tools…
 } finally {
