@@ -10,6 +10,8 @@ ships the Nitrosend tool surface for AI SDK developers — it is **not** a
 language model implementation, and it does not replace `@ai-sdk/openai`,
 `@ai-sdk/anthropic`, or any other model package.
 
+All plans, including free plans, have full access to Nitrosend MCP/API/CLI. MCP and AI SDK usage are not restricted to paid plans; plan limits apply to usage volume and paid add-ons.
+
 ## 1. Install
 
 ```bash
