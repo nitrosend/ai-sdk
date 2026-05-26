@@ -1,7 +1,7 @@
 # @nitrosend/ai-sdk
 
 Vercel AI SDK tools for [Nitrosend](https://nitrosend.com) — the multi-channel
-marketing platform. Drops Nitrosend's 21 MCP tools (draft campaigns, manage
+marketing platform. Drops Nitrosend's 23 MCP tools (draft campaigns, manage
 contacts, build flows, send tests, …) into `generateText`, `streamText`, and
 agent loops.
 
