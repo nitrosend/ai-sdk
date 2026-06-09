@@ -211,8 +211,8 @@ export const nitrosendToolSchemas = {
     idempotency_key: z.string().describe("Dedup key — same key returns cached result").optional()
   }).strict(),
   nitro_query: z.object({
-    entity: z.enum(["flows", "campaigns", "templates", "segments", "contacts", "lists", "events", "imports", "messages"]).describe("Which entity type to query. Use nitro_search_contacts for full-text contact search."),
-    filters: z.object({}).passthrough().describe("Entity-specific filters. All entities support id (integer) to fetch a single record.\n\n- **flows** — status (draft/active/paused/archived), campaign_id (integer|null), trigger_event (string), search (string)\n- **campaigns** — status (draft/active/paused/completed), search (string)\n- **templates** — subject (string, ILIKE match on subject line)\n- **segments** — name (string, ILIKE match)\n- **contacts** — query (string, full-text search), subscribed_email (boolean), subscribed_phone (boolean), list_id (integer)\n- **lists** — name (string, ILIKE match)\n- **events** — name (string, exact event type), from (ISO 8601 datetime), to (ISO 8601 datetime)\n- **imports** — status (pending/processing/completed/failed)\n- **messages** — channel (email/sms), status (queued/sent/failed), to (string, recipient address)").optional(),
+    entity: z.enum(["flows", "campaigns", "templates", "segments", "contacts", "lists", "events", "imports", "messages", "history"]).describe("Which entity type to query. Use nitro_search_contacts for full-text contact search."),
+    filters: z.object({}).passthrough().describe("Entity-specific filters. All entities support id (integer) to fetch a single record.\n\n- **flows** — status (draft/active/paused/archived), campaign_id (integer|null), trigger_event (string), search (string)\n- **campaigns** — status (draft/active/paused/completed), search (string)\n- **templates** — subject (string, ILIKE match on subject line)\n- **segments** — name (string, ILIKE match)\n- **contacts** — query (string, full-text search), subscribed_email (boolean), subscribed_phone (boolean), list_id (integer)\n- **lists** — name (string, ILIKE match)\n- **events** — name (string, exact event type), from (ISO 8601 datetime), to (ISO 8601 datetime)\n- **imports** — status (pending/processing/completed/failed)\n- **messages** — channel (email/sms), status (queued/sent/failed), to (string, recipient address)\n- **history** — source (notification/tool), event_type, tool, actor, correlation_id, resource_uri, from, to").optional(),
     page: z.number().int().describe("Page number (default 1)").optional(),
     per: z.number().int().describe("Results per page (max 50, default 25)").optional()
   }).strict(),
@@ -258,7 +258,7 @@ export const nitrosendToolSchemas = {
     idempotency_key: z.string().describe("Optional deduplication key for retry safety.").optional()
   }).strict(),
   nitro_set_brand_kit: z.object({
-    url: z.string().describe("Website URL to scrape Brand Kit from").optional(),
+    url: z.string().describe("Website URL to scrape Brand Kit identity from").optional(),
     logo_url: z.string().describe("Direct URL to a logo image (png/jpg/webp/svg) to attach — SVGs are auto-converted to PNG").optional(),
     fields: z.object({
       company_name: z.string().optional(),
