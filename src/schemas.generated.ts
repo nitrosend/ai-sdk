@@ -231,9 +231,9 @@ export const nitrosendToolSchemas = {
     page: z.number().int().describe("Page number (default 1)").optional(),
     per: z.number().int().describe("Results per page (max 50, default 25)").optional()
   }).strict(),
-  nitro_select_client_account: z.object({
-    client_account_sid: z.string().describe("Exact client account SID to select. Provide either client_account_sid or name.").optional(),
-    name: z.string().describe("Client account name to select when the SID is unknown. Provide either name or client_account_sid. Ambiguous names return candidates without changing context.").optional()
+  nitro_select_brand: z.object({
+    brand_sid: z.string().describe("Exact brand SID to select. Provide either brand_sid or name.").optional(),
+    name: z.string().describe("Brand name to select when the SID is unknown. Provide either name or brand_sid. Ambiguous names return candidates without changing context.").optional()
   }).strict(),
   nitro_send_message: z.object({
     channel: z.enum(["email", "sms"]).describe("Delivery channel"),
@@ -248,7 +248,7 @@ export const nitrosendToolSchemas = {
   nitro_send_test_message: z.object({
     target_type: z.enum(["template", "flow", "campaign"]).describe("Target entity type. Use with target_id unless latest_campaign or template_id is used.").optional(),
     target_id: z.number().int().gte(1).describe("Target entity ID. Use with target_type.").optional(),
-    latest_campaign: z.boolean().default(false).describe("Use the most recently created campaign in this client account."),
+    latest_campaign: z.boolean().default(false).describe("Use the most recently created campaign in this brand."),
     template_id: z.number().int().gte(1).describe("Template to test directly, or the specific flow/campaign template to choose.").optional(),
     action_id: z.number().int().gte(1).describe("Flow action ID to test when a flow has multiple message steps.").optional(),
     channel: z.enum(["auto", "email", "sms"]).default("auto").describe("Channel to test. Use auto unless a standalone template is ambiguous."),

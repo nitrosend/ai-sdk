@@ -1,6 +1,6 @@
 {
   "name": "@nitrosend/ai-sdk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Vercel AI SDK tools for Nitrosend, backed by the remote Nitrosend MCP server",
   "license": "MIT",
   "type": "module",
