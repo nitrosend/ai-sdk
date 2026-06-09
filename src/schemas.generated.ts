@@ -231,9 +231,9 @@ export const nitrosendToolSchemas = {
     page: z.number().int().describe("Page number (default 1)").optional(),
     per: z.number().int().describe("Results per page (max 50, default 25)").optional()
   }).strict(),
-  nitro_select_brand: z.object({
-    brand_sid: z.string().describe("Exact brand SID to select. Provide either brand_sid or name.").optional(),
-    name: z.string().describe("Brand name to select when the SID is unknown. Provide either name or brand_sid. Ambiguous names return candidates without changing context.").optional()
+  nitro_select_client_account: z.object({
+    client_account_sid: z.string().describe("Exact client account SID to select. Provide either client_account_sid or name.").optional(),
+    name: z.string().describe("Client account name to select when the SID is unknown. Provide either name or client_account_sid. Ambiguous names return candidates without changing context.").optional()
   }).strict(),
   nitro_send_message: z.object({
     channel: z.enum(["email", "sms"]).describe("Delivery channel"),
@@ -248,7 +248,7 @@ export const nitrosendToolSchemas = {
   nitro_send_test_message: z.object({
     target_type: z.enum(["template", "flow", "campaign"]).describe("Target entity type. Use with target_id unless latest_campaign or template_id is used.").optional(),
     target_id: z.number().int().gte(1).describe("Target entity ID. Use with target_type.").optional(),
-    latest_campaign: z.boolean().default(false).describe("Use the most recently created campaign in this brand."),
+    latest_campaign: z.boolean().default(false).describe("Use the most recently created campaign in this client account."),
     template_id: z.number().int().gte(1).describe("Template to test directly, or the specific flow/campaign template to choose.").optional(),
     action_id: z.number().int().gte(1).describe("Flow action ID to test when a flow has multiple message steps.").optional(),
     channel: z.enum(["auto", "email", "sms"]).default("auto").describe("Channel to test. Use auto unless a standalone template is ambiguous."),
@@ -257,8 +257,8 @@ export const nitrosendToolSchemas = {
     dry_run: z.boolean().default(false).describe("Validate target and recipients without sending."),
     idempotency_key: z.string().describe("Optional deduplication key for retry safety.").optional()
   }).strict(),
-  nitro_set_brand: z.object({
-    url: z.string().describe("Website URL to scrape brand from").optional(),
+  nitro_set_brand_kit: z.object({
+    url: z.string().describe("Website URL to scrape Brand Kit from").optional(),
     logo_url: z.string().describe("Direct URL to a logo image (png/jpg/webp/svg) to attach — SVGs are auto-converted to PNG").optional(),
     fields: z.object({
       company_name: z.string().optional(),
@@ -269,7 +269,7 @@ export const nitrosendToolSchemas = {
       font_heading: z.string().optional(),
       font_body: z.string().optional(),
       physical_address: z.string().optional()
-    }).passthrough().describe("Direct brand field updates").optional(),
+    }).passthrough().describe("Direct Brand Kit field updates").optional(),
     document: z.string().describe("Full brand voice markdown document").optional(),
     dry_run: z.boolean().default(false).describe("Preview changes without persisting"),
     mode: z.enum(["sync", "async"]).default("sync").describe("sync (default) or async for URL scraping"),
