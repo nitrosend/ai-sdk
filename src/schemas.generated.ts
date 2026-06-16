@@ -28,8 +28,8 @@ export const nitrosendToolSchemas = {
     from_email: z.string().describe("Sender email override").optional(),
     reply_to: z.string().describe("Reply-to email override").optional(),
     body: z.string().describe("SMS body text (sms campaigns) or email plain text").optional(),
-    sections: z.array(z.object({}).passthrough()).describe("Email design sections array — same format as nitro_manage_template. Requires subject. Image-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest; do not place raw direct-upload signed_id values in sections.").optional(),
-    theme: z.object({}).passthrough().describe("Email theme overrides merged on brand theme: {brand_color, bg_color, text_color, font_body, font_heading, logo_url}. logo_url must be a public URL or nitro_ingest media_url/image_url, not a raw signed_id.").optional(),
+    sections: z.array(z.object({}).passthrough()).describe("Email design sections array — same format as nitro_manage_template. Requires subject. Image-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest. For a local image too large for image_data, call nitro_ingest with upload={kind: 'image', filename, content_type, byte_size, checksum}, PUT bytes to direct_upload.url, then call nitro_ingest with signed_id and use the returned media_url/image_url here. Do not place raw signed_id values in sections.").optional(),
+    theme: z.object({}).passthrough().describe("Email theme overrides merged on brand theme: {brand_color, bg_color, text_color, font_body, font_heading, logo_url, radius, spacing_density}. logo_url must be a public URL or nitro_ingest media_url/image_url, not a raw signed_id. For a local logo file, call nitro_ingest with upload={kind: 'image', filename, content_type, byte_size, checksum}, PUT bytes, then call nitro_ingest with signed_id and use the returned media_url/image_url.").optional(),
     template_id: z.number().int().describe("Clone design from existing template (email campaigns)").optional(),
     if_version: z.number().int().describe("Optimistic concurrency token for patch/replace writes to an existing campaign template.").optional(),
     audience: z.object({
@@ -73,7 +73,7 @@ export const nitrosendToolSchemas = {
       from_name: z.string().describe("Sender name override (email steps)").optional(),
       from_email: z.string().describe("Sender email override (email steps)").optional(),
       reply_to: z.string().describe("Reply-to override (email steps)").optional(),
-      design: z.object({}).passthrough().describe("Email design: { sections: [...], theme: {...} }").optional(),
+      design: z.object({}).passthrough().describe("Email design: { sections: [...], theme: {...} }. Theme keys include brand_color, bg_color, text_color, font_body, font_heading, logo_url, radius, spacing_density.").optional(),
       if_version: z.number().int().describe("Optimistic concurrency token for replace-mode writes to an existing backing template.").optional(),
       template_version: z.number().int().describe("Read-only backing template version returned by Nitrosend; pass it back as if_version when replacing a flow.").optional(),
       bcc: z.string().describe("Optional BCC email address. A copy of each email sent by this step will be blind-copied to this address.").optional(),
@@ -85,14 +85,14 @@ export const nitrosendToolSchemas = {
       method: z.enum(["POST", "PUT"]).default("POST").describe("HTTP method (webhook steps)"),
       headers: z.object({}).passthrough().describe("Custom HTTP headers as key-value pairs (webhook steps)").optional(),
       filters: z.array(z.object({
-        name: z.enum(["contact_first_name", "contact_last_name", "contact_phone_number", "contact_email", "contact_country", "contact_subscribed_phone", "contact_subscribed_email", "contact_created_at", "contact_last_interacted_at", "contact_source", "contact_tag", "contact_verified", "contact_enriched"]).describe("Filter name — read nitro://schema for full details"),
-        predicate: z.enum(["eq", "not_eq", "cont", "not_cont", "start", "end", "gt", "lt", "gteq", "lteq", "present", "blank", "true", "false", "in", "not_in"]).describe("Ransack predicate"),
+        name: z.string().describe("Filter name — read nitro://schema for full details"),
+        predicate: z.enum(["eq", "not_eq", "cont", "not_cont", "start", "end", "gt", "lt", "gteq", "lteq", "present", "blank", "true", "false"]).describe("Ransack predicate"),
         value: z.unknown().describe("Filter value. For present/blank/true/false predicates, omit or pass true.").optional()
       }).passthrough()).describe("Split condition filters").optional(),
       yes: z.array(z.object({}).passthrough()).describe("Steps for yes branch (split steps, nested splits allowed)").optional(),
       no: z.array(z.object({}).passthrough()).describe("Steps for no branch (split steps, nested splits allowed)").optional(),
       channel: z.enum(["phone", "email", "all"]).default("phone").describe("Channel for subscribe/unsubscribe steps")
-    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, bcc (string, optional BCC email address)\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). Nested splits are allowed.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact.").optional(),
+    }).passthrough()).describe("Ordered array of flow steps. Required props per type:\n\n- **email** — subject (required), design ({sections, theme}) or body, preheader, from_name, from_email, reply_to, bcc (string, optional BCC email address). Theme may include radius and spacing_density.\n- **sms** — body (required)\n- **wait** — duration (integer, seconds — e.g. 86400 = 1 day)\n- **split** — filters (required, [{name, predicate, value}]), yes (steps array), no (steps array). Nested splits are allowed.\n- **emit_event** — event_name (required), event_data (object), forward_event_data (boolean)\n- **webhook** — url (required), method (POST or PUT, default POST), headers (object), body (template string with merge tags)\n- **subscribe** — channel (phone, email, or all — default phone). Subscribes the contact.\n- **unsubscribe** — channel (phone, email, or all — default phone). Unsubscribes the contact.").optional(),
     dry_run: z.boolean().default(false).describe("Preview graph without persisting"),
     idempotency_key: z.string().describe("Deduplication key for retry safety").optional(),
     confirm: z.boolean().default(false).describe("Required for replace mode")
@@ -122,10 +122,10 @@ export const nitrosendToolSchemas = {
   nitro_define_segment: z.object({
     name: z.string().describe("Segment name (required when preview_only: false)").optional(),
     filters: z.array(z.object({
-      name: z.enum(["contact_first_name", "contact_last_name", "contact_phone_number", "contact_email", "contact_country", "contact_subscribed_phone", "contact_subscribed_email", "contact_created_at", "contact_last_interacted_at", "contact_source", "contact_tag", "contact_verified", "contact_enriched"]).describe("Filter name — read nitro://schema for full details"),
-      predicate: z.enum(["eq", "not_eq", "cont", "not_cont", "start", "end", "gt", "lt", "gteq", "lteq", "present", "blank", "true", "false", "in", "not_in"]).describe("Ransack predicate"),
-      value: z.unknown().describe("Filter value — string, number, boolean, or array. For present/blank predicates, pass true.")
-    }).passthrough()).describe("Array of filter objects. Each filter has:\n- **name** — filter alias from flows.yml (e.g. \"contact_email\", \"contact_first_name\", \"contact_country\", \"contact_subscribed_email\", \"contact_created_at\", \"contact_tag\")\n- **predicate** — Ransack predicate — eq, not_eq, cont, not_cont, start, end, gt, lt, gteq, lteq, present, blank, true, false, in, not_in\n- **value** — filter value (string, number, boolean, or array for in/not_in). For present/blank/true/false predicates, pass true."),
+      name: z.string().describe("Filter name — read nitro://schema for full details"),
+      predicate: z.enum(["eq", "not_eq", "cont", "not_cont", "start", "end", "gt", "lt", "gteq", "lteq", "present", "blank", "true", "false"]).describe("Ransack predicate"),
+      value: z.unknown().describe("Filter value — string, number, or boolean. For present/blank predicates, pass true.")
+    }).passthrough()).describe("Array of filter objects. Each filter has:\n- **name** — filter alias from flows.yml (e.g. \"contact_email\", \"contact_first_name\", \"contact_country\", \"contact_subscribed_email\", \"contact_created_at\", \"contact_tag\")\n- **predicate** — Ransack predicate — eq, not_eq, cont, not_cont, start, end, gt, lt, gteq, lteq, present, blank, true, false\n- **value** — filter value (string, number, or boolean). For present/blank/true/false predicates, pass true."),
     segment_id: z.number().int().describe("Existing segment ID to update (omit for new segment)").optional(),
     preview_only: z.boolean().default(true).describe("Only preview matching contacts, do not save (default: true). Set to false + provide name to persist."),
     idempotency_key: z.string().describe("Optional deduplication key").optional()
@@ -147,13 +147,34 @@ export const nitrosendToolSchemas = {
       opt_in: z.boolean().describe("Subscribe contact for delivery. Defaults to true for email contacts. Must be explicitly true for SMS (TCPA). Set false to import without subscribing.").optional()
     }).passthrough()).describe("Array of contact objects (max 100): {email, phone, first_name, last_name, country_code, source, opt_in}").optional(),
     import_id: z.number().int().describe("Existing Import record ID for CSV processing").optional(),
+    signed_id: z.string().describe("Upload signed_id returned by this tool's upload reservation after PUTing CSV bytes to direct_upload.url.").optional(),
+    upload: z.object({
+      filename: z.string().describe("Original CSV filename, e.g. contacts.csv."),
+      content_type: z.string().describe("MIME type. Use text/csv or application/csv."),
+      byte_size: z.number().int().describe("Exact file size in bytes before upload."),
+      checksum: z.string().describe("Base64 MD5 checksum required by Active Storage direct upload.")
+    }).strict().describe("Reserve an authorized upload link for a local CSV file. Provide filename, content_type, byte_size, and base64 MD5 checksum; then PUT bytes to the returned direct_upload.url and call this tool again with signed_id.").optional(),
+    resource: z.string().default("contacts").describe("Import resource. Use contacts for contact CSV imports."),
+    parser: z.string().default("default").describe("Parser name. Use default unless a future schema documents another parser."),
+    columns: z.object({}).passthrough().describe("Optional import column mapping object.").optional(),
+    options: z.object({
+      list_ids: z.array(z.number().int()).optional()
+    }).passthrough().describe("Import options, e.g. {list_ids: [123]} to add imported contacts to lists.").optional(),
     dry_run: z.boolean().default(false).describe("Preview import without persisting (default: false)"),
     idempotency_key: z.string().describe("Optional deduplication key").optional()
   }).strict(),
   nitro_ingest: z.object({
+    kind: z.string().describe("Asset kind to ingest. V1 supports image only.").optional(),
     image_data: z.string().describe("Image payload as raw base64 bytes or a full data URL. PNG, JPEG, or WebP only; decoded size must be under 10MB.").optional(),
     image_url: z.string().describe("Public http/https image URL to ingest into Nitro-hosted storage when permanence is desired. PNG, JPEG, or WebP only; remote file must be under 10MB.").optional(),
-    signed_id: z.string().describe("Active Storage signed_id returned by /v1/direct_uploads after uploading bytes with purpose=image or purpose=media_asset.").optional(),
+    signed_id: z.string().describe("Upload signed_id returned by this tool's upload reservation after PUTing image bytes to direct_upload.url.").optional(),
+    upload: z.object({
+      kind: z.string().describe("Asset kind. V1 supports image only."),
+      filename: z.string().describe("Original image filename, e.g. hero.png."),
+      content_type: z.string().describe("MIME type. Use image/png, image/jpeg, or image/webp."),
+      byte_size: z.number().int().describe("Exact file size in bytes before upload."),
+      checksum: z.string().describe("Base64 MD5 checksum required by Active Storage direct upload.")
+    }).strict().describe("Reserve an authorized upload link for a local asset. V1 supports kind=image only. Provide filename, content_type, byte_size, and base64 MD5 checksum; then PUT bytes to the returned direct_upload.url and call this tool again with signed_id.").optional(),
     filename: z.string().describe("Original filename for image_data uploads, or an optional filename override for image_url/signed_id sources.").optional(),
     content_type: z.string().describe("Optional MIME type hint when image_data is raw base64 rather than a data URL.").optional()
   }).strict(),
@@ -179,14 +200,21 @@ export const nitrosendToolSchemas = {
     confirm: z.boolean().default(false).describe("Required for remove operation (destructive)")
   }).strict(),
   nitro_manage_template: z.object({
-    sections: z.array(z.object({}).passthrough()).describe("Array of section objects: {type, props, styles?}. Read nitro://schema for full prop specs.\n\nSection types and key props:\n\n- **header** — {logo_url, logo_alt, logo_width, background_color}\n- **text** — {content (HTML string)}\n- **image** — {src, alt, href, width}\n- **button** — {text, href, background_color, text_color, align, border_radius, padding}\n- **columns** — {columns: [{width, sections: [...]}]} — nested sections inside columns\n- **product** — {name, price, image_url, href, description}\n- **social** — {links: [{platform, url}], align}\n- **divider** — {color, width, padding}\n- **spacer** — {height}\n- **footer** — {company_name, address, unsubscribe_text}\n\nImage-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest. Do not place raw direct-upload signed_id values in sections.").optional(),
+    sections: z.array(z.object({}).passthrough()).describe("Array of section objects: {id?, type, props, styles?}. Read nitro://schema for full prop specs. Persisted sections receive stable top-level ids for future section_updates targeting.\n\nSection types and key props:\n\n- **header** — {variant, wordmark_text, logo_url, logo_alt, logo_width, background_color}\n- **text** — {content (HTML string)}\n- **image** — {src, alt, href, width}\n- **button** — {text, href, background_color, text_color, section_background_color, align, border_radius, inner_padding, font_weight, font_family, text_transform}. background_color is the button fill; section_background_color is the surrounding band.\n- **columns** — {columns: [{width, sections: [...]}]} — nested sections inside columns\n- **product** — {name, price, image_url, href, description}\n- **social** — {links: [{platform, url}], align}\n- **divider** — {color, width, padding}\n- **spacer** — {height}\n- **footer** — {company_name, address, unsubscribe_text}\n\nImage-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest. For a local image too large for image_data, call nitro_ingest with upload={kind: 'image', filename, content_type, byte_size, checksum}, PUT bytes to direct_upload.url, then call nitro_ingest with signed_id and use the returned media_url/image_url here. Do not place raw signed_id values in sections.").optional(),
     section_updates: z.array(z.object({
+      id: z.string().describe("Stable section id from the stored template sections array. Preferred target.").optional(),
       index: z.number().int().describe("0-based section index").optional(),
       type: z.string().describe("Existing section type to target or assert").optional(),
       occurrence: z.number().int().describe("0-based occurrence among sections of the requested type").optional(),
       props: z.object({}).passthrough().describe("Props to shallow-merge into the target section").optional(),
-      styles: z.object({}).passthrough().describe("Styles to shallow-merge into the target section").optional()
-    }).strict()).describe("Small update shortcut for existing sections. Each item targets by 0-based index, or by type plus optional 0-based occurrence, and shallow-merges props/styles. Does not change section order or type.").optional(),
+      styles: z.object({}).passthrough().describe("Styles to shallow-merge into the target section").optional(),
+      text_patch: z.object({
+        prop: z.string().describe("String prop to edit. Required when the section type has no clear default or when editing a non-default prop.").optional(),
+        find: z.string().describe("Literal substring to find").optional(),
+        replace: z.string().describe("Replacement string").optional(),
+        all: z.boolean().default(false).describe("Replace every occurrence; requires at least one match")
+      }).strict().describe("Literal string replacement inside one string prop. Defaults prop by section type when unambiguous, e.g. text.content, hero.title, button.text. Requires exactly one match unless all=true.").optional()
+    }).strict()).describe("Small update shortcut for existing sections. Prefer targeting by stable section id from nitro_query/template reads; fall back to 0-based index, or type plus optional 0-based occurrence. Shallow-merges props/styles or uses text_patch for literal copy edits inside a string prop. Does not change section order or type.").optional(),
     subject: z.string().describe("Email subject line (recommended under 60 chars)").optional(),
     name: z.string().describe("Template display name").optional(),
     composition_mode: z.enum(["intent", "draft", "validate"]).describe("intent returns composition_contract; validate checks a draft without persistence; draft validates and persists.").optional(),
@@ -204,7 +232,7 @@ export const nitrosendToolSchemas = {
     from_name: z.string().describe("Sender name (falls back to account default)").optional(),
     from_email: z.string().describe("Sender email (falls back to account default)").optional(),
     reply_to: z.string().describe("Reply-to email address").optional(),
-    theme: z.object({}).passthrough().describe("Theme overrides merged on top of brand theme. Keys: brand_color (hex), bg_color (hex), text_color (hex), font_body (string), font_heading (string), logo_url (URL)").optional(),
+    theme: z.object({}).passthrough().describe("Theme overrides merged on top of brand theme. Keys: brand_color (hex), bg_color (hex), text_color (hex), font_body (string), font_heading (string), logo_url (public URL or nitro_ingest media_url/image_url, not raw signed_id). For a local logo file, call nitro_ingest with upload={kind: 'image', filename, content_type, byte_size, checksum}, PUT bytes, then call nitro_ingest with signed_id and use the returned media_url/image_url. Also supports radius (integer px), spacing_density (compact, normal, spacious).").optional(),
     template_id: z.number().int().describe("Template ID for update mode — provide with fields to change").optional(),
     based_on: z.number().int().describe("Source template ID for clone mode — creates a copy").optional(),
     if_version: z.number().int().describe("Optimistic concurrency — rejects update if template version mismatches").optional(),
@@ -233,6 +261,13 @@ export const nitrosendToolSchemas = {
     page: z.number().int().describe("Page number (default 1)").optional(),
     per: z.number().int().describe("Results per page (max 50, default 25)").optional()
   }).strict(),
+  nitro_search_docs: z.object({
+    query: z.string().describe("What to look up, e.g. 'verify sending domain', 'rest api authentication', 'cli install', 'connect cursor'"),
+    limit: z.number().int().default(6).describe("Maximum results to return (default 6, max 10)")
+  }).strict(),
+  nitro_select_account: z.object({
+    account_id: z.number().int().describe("ID of the account to switch to. Get IDs from nitro_get_status.available_accounts.items[*].id.")
+  }).strict(),
   nitro_select_brand: z.object({
     brand_sid: z.string().describe("Exact brand SID to select. Provide either brand_sid or name.").optional(),
     name: z.string().describe("Brand name to select when the SID is unknown. Provide either name or brand_sid. Ambiguous names return candidates without changing context.").optional()
@@ -243,7 +278,7 @@ export const nitrosendToolSchemas = {
     subject: z.string().describe("Email subject line (required for email)").optional(),
     body: z.string().describe("Message body. Required for SMS. Optional plain text for email.").optional(),
     template_id: z.number().int().describe("Load email design from an existing template (email only)").optional(),
-    data: z.object({}).passthrough().describe("Merge variables e.g. { order_id: 123, name: 'Alice' }").optional(),
+    data: z.object({}).passthrough().describe("Transactional merge variables. Use in email templates as {{ data.order_id }} or nested paths like {{ data.customer.name }}.").optional(),
     idempotency_key: z.string().describe("Prevents duplicate sends on retry").optional(),
     dry_run: z.boolean().default(false).describe("Validate and preview without sending")
   }).strict(),
@@ -260,17 +295,21 @@ export const nitrosendToolSchemas = {
     idempotency_key: z.string().describe("Optional deduplication key for retry safety.").optional()
   }).strict(),
   nitro_set_brand_kit: z.object({
-    url: z.string().describe("Website URL to scrape Brand Kit identity from").optional(),
-    logo_url: z.string().describe("Direct URL to a logo image (png/jpg/webp/svg) to attach — SVGs are auto-converted to PNG").optional(),
+    url: z.string().describe("Website URL to scrape Brand Kit from").optional(),
+    logo_url: z.string().describe("Public or Nitro CDN URL to a logo image (png/jpg/webp/svg) to attach. For local logo files, call nitro_ingest with kind='image' first and pass the returned media_url or image_url here. Raw signed_id values are not accepted.").optional(),
     fields: z.object({
-      company_name: z.string().optional(),
-      company_description: z.string().optional(),
       brand_color: z.string().describe("Hex color e.g. #ff0000").optional(),
       text_color: z.string().describe("Hex color").optional(),
       bg_color: z.string().describe("Hex color").optional(),
-      font_heading: z.string().optional(),
       font_body: z.string().optional(),
-      physical_address: z.string().optional()
+      font_heading: z.string().optional(),
+      heading_size: z.number().int().describe("Heading/title font size in pixels, 12-48").optional(),
+      body_size: z.number().int().describe("Body text font size in pixels, 12-20").optional(),
+      radius: z.number().int().describe("Global brand corner radius in pixels, 0-64").optional(),
+      spacing_density: z.enum(["compact", "normal", "spacious"]).describe("Section spacing rhythm: compact, normal, or spacious").optional(),
+      company_name: z.string().optional(),
+      physical_address: z.string().optional(),
+      company_description: z.string().optional()
     }).passthrough().describe("Direct Brand Kit field updates").optional(),
     document: z.string().describe("Full brand voice markdown document").optional(),
     dry_run: z.boolean().default(false).describe("Preview changes without persisting"),
