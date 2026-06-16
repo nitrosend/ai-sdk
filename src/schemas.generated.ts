@@ -28,8 +28,8 @@ export const nitrosendToolSchemas = {
     from_email: z.string().describe("Sender email override").optional(),
     reply_to: z.string().describe("Reply-to email override").optional(),
     body: z.string().describe("SMS body text (sms campaigns) or email plain text").optional(),
-    sections: z.array(z.object({}).passthrough()).describe("Email design sections array — same format as nitro_manage_template. Requires subject. Image-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest_image; do not place raw direct-upload signed_id values in sections.").optional(),
-    theme: z.object({}).passthrough().describe("Email theme overrides merged on brand theme: {brand_color, bg_color, text_color, font_body, font_heading, logo_url}. logo_url must be a public URL or nitro_ingest_image media_url/image_url, not a raw signed_id.").optional(),
+    sections: z.array(z.object({}).passthrough()).describe("Email design sections array — same format as nitro_manage_template. Requires subject. Image-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest; do not place raw direct-upload signed_id values in sections.").optional(),
+    theme: z.object({}).passthrough().describe("Email theme overrides merged on brand theme: {brand_color, bg_color, text_color, font_body, font_heading, logo_url}. logo_url must be a public URL or nitro_ingest media_url/image_url, not a raw signed_id.").optional(),
     template_id: z.number().int().describe("Clone design from existing template (email campaigns)").optional(),
     if_version: z.number().int().describe("Optimistic concurrency token for patch/replace writes to an existing campaign template.").optional(),
     audience: z.object({
@@ -150,7 +150,7 @@ export const nitrosendToolSchemas = {
     dry_run: z.boolean().default(false).describe("Preview import without persisting (default: false)"),
     idempotency_key: z.string().describe("Optional deduplication key").optional()
   }).strict(),
-  nitro_ingest_image: z.object({
+  nitro_ingest: z.object({
     image_data: z.string().describe("Image payload as raw base64 bytes or a full data URL. PNG, JPEG, or WebP only; decoded size must be under 10MB.").optional(),
     image_url: z.string().describe("Public http/https image URL to ingest into Nitro-hosted storage when permanence is desired. PNG, JPEG, or WebP only; remote file must be under 10MB.").optional(),
     signed_id: z.string().describe("Active Storage signed_id returned by /v1/direct_uploads after uploading bytes with purpose=image or purpose=media_asset.").optional(),
@@ -179,7 +179,7 @@ export const nitrosendToolSchemas = {
     confirm: z.boolean().default(false).describe("Required for remove operation (destructive)")
   }).strict(),
   nitro_manage_template: z.object({
-    sections: z.array(z.object({}).passthrough()).describe("Array of section objects: {type, props, styles?}. Read nitro://schema for full prop specs.\n\nSection types and key props:\n\n- **header** — {logo_url, logo_alt, logo_width, background_color}\n- **text** — {content (HTML string)}\n- **image** — {src, alt, href, width}\n- **button** — {text, href, background_color, text_color, align, border_radius, padding}\n- **columns** — {columns: [{width, sections: [...]}]} — nested sections inside columns\n- **product** — {name, price, image_url, href, description}\n- **social** — {links: [{platform, url}], align}\n- **divider** — {color, width, padding}\n- **spacer** — {height}\n- **footer** — {company_name, address, unsubscribe_text}\n\nImage-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest_image. Do not place raw direct-upload signed_id values in sections.").optional(),
+    sections: z.array(z.object({}).passthrough()).describe("Array of section objects: {type, props, styles?}. Read nitro://schema for full prop specs.\n\nSection types and key props:\n\n- **header** — {logo_url, logo_alt, logo_width, background_color}\n- **text** — {content (HTML string)}\n- **image** — {src, alt, href, width}\n- **button** — {text, href, background_color, text_color, align, border_radius, padding}\n- **columns** — {columns: [{width, sections: [...]}]} — nested sections inside columns\n- **product** — {name, price, image_url, href, description}\n- **social** — {links: [{platform, url}], align}\n- **divider** — {color, width, padding}\n- **spacer** — {height}\n- **footer** — {company_name, address, unsubscribe_text}\n\nImage-bearing URL props accept public URLs or Nitro CDN media_url/image_url values returned by nitro_ingest. Do not place raw direct-upload signed_id values in sections.").optional(),
     section_updates: z.array(z.object({
       index: z.number().int().describe("0-based section index").optional(),
       type: z.string().describe("Existing section type to target or assert").optional(),
