@@ -296,7 +296,7 @@ export const nitrosendToolSchemas = {
   }).strict(),
   nitro_set_brand_kit: z.object({
     url: z.string().describe("Website URL to scrape Brand Kit from").optional(),
-    logo_url: z.string().describe("Public or Nitro CDN URL to a logo image (png/jpg/webp/svg) to attach. For local logo files, call nitro_ingest with kind='image' first and pass the returned media_url or image_url here. Raw signed_id values are not accepted.").optional(),
+    logo_url: z.string().describe("Public or Nitro CDN URL to a logo image (png/jpg/webp/svg) to attach. For a small local logo, call nitro_ingest with kind='image' and image_data. For a larger local logo, call nitro_ingest with upload={kind: 'image', filename, content_type, byte_size, checksum}, PUT bytes to direct_upload.url, then call nitro_ingest with signed_id. Pass the returned media_url or image_url here. Raw signed_id values are not accepted.").optional(),
     fields: z.object({
       brand_color: z.string().describe("Hex color e.g. #ff0000").optional(),
       text_color: z.string().describe("Hex color").optional(),
