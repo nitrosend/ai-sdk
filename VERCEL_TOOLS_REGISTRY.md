@@ -53,7 +53,7 @@ const result = await withNitrosendTools({}, async ({ tools }) => {
 
 console.log(result.text);`,
   docsUrl: 'https://docs.nitrosend.com/integrations/vercel-ai-sdk',
-  apiKeyUrl: 'https://app.nitrosend.com/settings/api-keys',
+  apiKeyUrl: 'https://app.nitrosend.com/my/brand/api-keys',
   websiteUrl: 'https://nitrosend.com',
   npmUrl: 'https://www.npmjs.com/package/@nitrosend/ai-sdk',
 }

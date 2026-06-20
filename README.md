@@ -34,7 +34,7 @@ Set one of:
 | `NITROSEND_BEARER_TOKEN`  | Opaque bearer issued by your own auth flow.          |
 | `NITROSEND_MCP_URL`       | Override the MCP endpoint (defaults to prod).        |
 
-Get an API key from **Settings → API Keys** in the Nitrosend dashboard.
+Get an API key from **Brand → API Keys** in the Nitrosend dashboard.
 
 ## 2. Quickstart
 
