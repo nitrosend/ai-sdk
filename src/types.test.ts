@@ -22,14 +22,14 @@ test('NitrosendToolInput exposes per-tool input shape', () => {
 test('control delivery keeps the reviewed-brand assertion optional and strict', () => {
   const schema = nitrosendToolSchemas.nitro_control_delivery;
   const base = {
-    target_type: 'campaign' as const,
+    target_type: 'flow' as const,
     target_id: 7,
     operation: 'approve' as const,
   };
 
   const withoutAssertions: NitrosendToolInput<'nitro_control_delivery'> = schema.parse(base);
   assert.equal(withoutAssertions.expected_brand_sid, undefined);
-  // Flow approve/reject/live enforce revision_id conditionally in the domain layer.
+  // Flow omission derives the current draft; presence asserts that draft is still current.
   assert.equal(withoutAssertions.revision_id, undefined);
 
   const withAssertions: NitrosendToolInput<'nitro_control_delivery'> = schema.parse({

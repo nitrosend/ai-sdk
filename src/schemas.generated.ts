@@ -263,7 +263,7 @@ export const nitrosendToolSchemas = {
     expected_brand_sid: z.string().min(1).describe("Optional reviewed-brand assertion. When available, copy meta.current_brand.sid from the reviewed result.").optional(),
     operation: z.enum(["approve", "reject", "live", "schedule", "pause", "resume", "cancel", "archive", "restore", "delete"]).describe("approve preflights; schedule is campaign-only; delete requires confirm and a never-sent draft."),
     scheduled_at: z.iso.datetime().describe("Required for schedule.").optional(),
-    revision_id: z.number().int().gte(1).describe("Exact flow revision for approve, reject, or live.").optional(),
+    revision_id: z.number().int().gte(1).describe("Optional for flow approve, reject, and live. Omit to use the current draft; supply it as a current-draft staleness assertion.").optional(),
     confirm_send_to_all: z.boolean().describe("Explicit all_contacts confirmation for live/schedule.").optional(),
     confirm: z.boolean().describe("Required for delete.").optional(),
     idempotency_key: z.string().describe("Campaign-live retry key; reuse only for the same send.").optional()
@@ -506,7 +506,7 @@ export const nitrosendToolSchemas = {
   nitro_review_delivery: z.object({
     target_type: z.enum(["template", "flow", "campaign"]).describe("Entity type to review").optional(),
     target_id: z.number().int().gte(1).describe("Entity ID to review").optional(),
-    revision_id: z.number().int().gte(1).describe("Required for flows. Exact immutable flow revision to review.").optional(),
+    revision_id: z.number().int().gte(1).describe("Optional for flows. Omit to review the current draft, or supply its ID as a current-draft assertion.").optional(),
     contact_id: z.number().int().gte(1).describe("Optional contact ID for merge-tag personalization during review").optional(),
     subject: z.string().max(998).describe("Subject for a self-contained inline email review").optional(),
     html: z.string().min(1).max(262144).describe("Rendered HTML for a self-contained inline email review").optional()
