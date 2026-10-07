@@ -52,6 +52,6 @@
   "homepage": "https://nitrosend.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nitrosend/nitrosend"
+    "url": "https://github.com/nitrosend/ai-sdk.git"
   }
 }

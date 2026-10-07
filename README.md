@@ -160,20 +160,3 @@ your application can decide what to do.
 the stdio MCP bridge consumed by IDE clients. This package targets
 programmatic AI SDK usage and does not duplicate either. All three speak to
 the same Nitrosend backend.
-
-## 5. Publish + Tools Registry checklist
-
-Before submitting to the [AI SDK Tools Registry](https://ai-sdk.dev/tools-registry):
-
-1. Bump `version` and run `npm run prepack` (regenerates schemas, builds, type-checks).
-2. Publish: `npm publish --access public`.
-3. Open a PR to [`vercel/ai`](https://github.com/vercel/ai) adding an entry
-   to `content/tools-registry/registry.ts`. The exact object to paste —
-   plus pre-publish checklist — lives next to this README in the source
-   repo as `VERCEL_TOOLS_REGISTRY.md` (it is intentionally not shipped to
-   npm; view it on GitHub at
-   [github.com/nitrosend/ai-sdk/blob/main/VERCEL_TOOLS_REGISTRY.md](https://github.com/nitrosend/ai-sdk/blob/main/VERCEL_TOOLS_REGISTRY.md)).
-4. The full Vercel Marketplace distribution (one-click installs from
-   Vercel, secret rotation, billing) is tracked separately in the
-   companion `vercel-marketplace-native-integration` spec — that work is
-   not part of this package.
