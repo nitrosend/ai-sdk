@@ -18,7 +18,7 @@
   "scripts": {
     "generate:schemas": "node scripts/generate-schemas.mjs",
     "check:schemas": "node scripts/check-schema-count.mjs",
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && node scripts/generate-version.mjs && tsc",
     "dev": "tsc --watch",
     "test": "node --test --import tsx 'src/**/*.test.ts'",
     "prepack": "npm run generate:schemas && npm run build"
@@ -52,6 +52,6 @@
   "homepage": "https://nitrosend.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nitrosend/nitrosend"
+    "url": "https://github.com/nitrosend/ai-sdk.git"
   }
 }

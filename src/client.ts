@@ -10,10 +10,11 @@ import {
   nitrosendToolSchemas,
   type NitrosendToolName,
 } from './schemas.generated.js';
+import { VERSION } from './version.generated.js';
 
 const DEFAULT_URL = 'https://api.nitrosend.com/mcp';
 const CLIENT_NAME = '@nitrosend/ai-sdk';
-const CLIENT_VERSION = '0.1.0';
+const USER_AGENT = `nitrosend-ai-sdk/${VERSION}`;
 
 export interface NitrosendOptions {
   apiKey?: string;
@@ -39,6 +40,19 @@ function setAuthorization(headers: Record<string, string>, value: string): void 
     if (key.toLowerCase() === 'authorization') delete headers[key];
   }
   headers['Authorization'] = value;
+}
+
+function applyUserAgent(headers: Record<string, string>): void {
+  // Keep a caller User-Agent in front and append ours, the same way
+  // @ai-sdk/mcp appends its own token after this one.
+  const agents: string[] = [];
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === 'user-agent') {
+      agents.push(headers[key]);
+      delete headers[key];
+    }
+  }
+  headers['User-Agent'] = [...agents, USER_AGENT].join(' ');
 }
 
 function applyApiKey(headers: Record<string, string>, apiKey: string): void {
@@ -95,6 +109,7 @@ export async function createNitrosendMCPClient(
   options: NitrosendOptions = {},
 ): Promise<MCPClient> {
   const { headers, authProvider } = resolveNitrosendAuth(options);
+  applyUserAgent(headers);
   const url = resolveNitrosendUrl(options);
   try {
     return await createMCPClient({
@@ -107,7 +122,7 @@ export async function createNitrosendMCPClient(
         fetch: options.fetch,
       },
       name: CLIENT_NAME,
-      version: CLIENT_VERSION,
+      version: VERSION,
     });
   } catch (cause) {
     throw new NitrosendAISDKError(

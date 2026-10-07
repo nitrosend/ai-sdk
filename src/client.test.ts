@@ -1,5 +1,6 @@
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   resolveNitrosendAuth,
   resolveNitrosendUrl,
@@ -11,6 +12,10 @@ import {
 import { NitrosendAISDKError } from './errors.js';
 
 const ENV_KEYS = ['NITROSEND_API_KEY', 'NITROSEND_BEARER_TOKEN', 'NITROSEND_MCP_URL'];
+
+const PACKAGE_VERSION: string = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
 
 let savedEnv: Record<string, string | undefined>;
 
@@ -223,6 +228,49 @@ describe('nitrosend', () => {
     assert.match(capturedUrl, /^https:\/\/api\.nitrosend\.com\/mcp/);
     assert.equal(capturedRedirect, 'error');
     assert.equal(capturedAuth, 'Bearer nskey_live_probekey123');
+  });
+
+  test('identifies the SDK by versioned User-Agent and clientInfo version', async () => {
+    const calls: Array<{ userAgent: string | null; body?: string }> = [];
+    const probeFetch: typeof fetch = async (_input, init) => {
+      const headers = new Headers((init as RequestInit | undefined)?.headers);
+      const body = (init as RequestInit | undefined)?.body;
+      calls.push({ userAgent: headers.get('user-agent'), body: body ? String(body) : undefined });
+      throw new Error('probe-stop');
+    };
+    await assert.rejects(
+      () => nitrosend({ apiKey: 'nskey_live_probekey123', fetch: probeFetch }),
+      (err: unknown) => err instanceof NitrosendAISDKError,
+    );
+    assert.ok(calls.length > 0);
+    for (const call of calls) {
+      assert.equal(call.userAgent?.split(' ')[0], `nitrosend-ai-sdk/${PACKAGE_VERSION}`);
+    }
+    const initialize = calls.find((call) => call.body?.includes('"initialize"'));
+    assert.ok(initialize?.body);
+    assert.equal(JSON.parse(initialize.body).params.clientInfo.version, PACKAGE_VERSION);
+  });
+
+  test('keeps a caller User-Agent in front of the SDK token', async () => {
+    let capturedUserAgent = '';
+    const probeFetch: typeof fetch = async (_input, init) => {
+      const headers = new Headers((init as RequestInit | undefined)?.headers);
+      capturedUserAgent = headers.get('user-agent') ?? '';
+      throw new Error('probe-stop');
+    };
+    await assert.rejects(
+      () =>
+        nitrosend({
+          apiKey: 'nskey_live_probekey123',
+          headers: { 'user-agent': 'my-app/1.0' },
+          fetch: probeFetch,
+        }),
+      (err: unknown) => err instanceof NitrosendAISDKError,
+    );
+    assert.deepEqual(capturedUserAgent.split(' ').slice(0, 2), [
+      'my-app/1.0',
+      `nitrosend-ai-sdk/${PACKAGE_VERSION}`,
+    ]);
   });
 
   test('NITROSEND_MCP_URL env overrides default transport URL', async () => {
