@@ -4,9 +4,12 @@ Maintainer checklist for publishing to npm and submitting to the
 [AI SDK Tools Registry](https://ai-sdk.dev/tools-registry). This file is not
 shipped to npm.
 
-1. Bump `version` and run `npm run prepack` (regenerates schemas and the
-   version constant, builds, type-checks).
-2. Publish: `npm publish --access public`.
+1. Bump `version` and run `npm run prepack` in the Nitrosend workspace
+   (regenerates schemas and the version constant, builds, type-checks), then
+   commit the result.
+2. Publish: push the tag `vX.Y.Z`. `.github/workflows/release.yml` builds,
+   tests and publishes the committed schemas through npm trusted publishing;
+   no npm token is involved.
 3. Open a PR to [`vercel/ai`](https://github.com/vercel/ai) adding an entry
    to `content/tools-registry/registry.ts`. The exact object to paste, plus
    the pre-publish checklist, lives in
