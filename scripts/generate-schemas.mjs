@@ -11,7 +11,7 @@ const KNOWN_KEYWORDS = new Set([
   '$schema',
   'type', 'properties', 'required', 'items', 'enum',
   'description', 'default', 'format', 'minimum', 'maximum',
-  'minItems', 'maxItems', 'minLength', 'maxLength',
+  'minItems', 'maxItems', 'minLength', 'maxLength', 'pattern', 'maxProperties',
   'uniqueItems', 'additionalProperties', 'title', 'examples',
   '$defs', '$ref', 'oneOf'
 ]);
@@ -133,6 +133,7 @@ function schemaToZod(schema, refs = new Map()) {
     else expr = 'z.string()';
     if (typeof schema.minLength === 'number') expr += `.min(${schema.minLength})`;
     if (typeof schema.maxLength === 'number') expr += `.max(${schema.maxLength})`;
+    if (typeof schema.pattern === 'string') expr += `.regex(new RegExp(${JSON.stringify(schema.pattern)}))`;
   } else if (schema.type === 'integer') {
     expr = 'z.number().int()';
     if (typeof schema.minimum === 'number') expr += `.gte(${schema.minimum})`;
@@ -186,6 +187,9 @@ function schemaToZod(schema, refs = new Map()) {
       // drop payload fields on tools where the manifest intentionally
       // declares an open-ended object (e.g. webhook headers, event_data).
       expr = `${expr}.passthrough()`;
+    }
+    if (typeof schema.maxProperties === 'number') {
+      expr += `.refine(value => Object.keys(value).length <= ${schema.maxProperties}, { message: "At most ${schema.maxProperties} properties" })`;
     }
   } else if (!schema.type) {
     expr = 'z.unknown()';
