@@ -27,7 +27,7 @@ type NitroComposeFlowFilterNode = {
 type NitroComposeFlowFlowStep = {
     action_name?: string;
     key?: string;
-    type: "email" | "sms" | "wait" | "split" | "emit_event" | "webhook" | "subscribe" | "unsubscribe";
+    type: "email" | "sms" | "wait" | "split" | "random_split" | "classify_reply" | "reply" | "emit_event" | "webhook" | "subscribe" | "unsubscribe";
     subject?: string;
     body?: string;
     content_format?: "designed" | "plain";
@@ -40,7 +40,13 @@ type NitroComposeFlowFlowStep = {
     design?: Record<string, unknown>;
     if_version?: number;
     template_version?: number;
-    bcc?: string;
+    reply_all: boolean;
+    cc?: Array<string>;
+    bcc?: string |
+    Array<string>;
+    categories?: Array<Record<string, unknown>>;
+    paths?: Array<Record<string, unknown>>;
+    branches?: Record<string, unknown>;
     duration?: number;
     send_at?: string;
     time_zone?: string;
@@ -100,8 +106,8 @@ const NitroComposeFlowFilterNodeSchema: z.ZodType<NitroComposeFlowFilterNode> = 
   ]));
 const NitroComposeFlowFlowStepSchema: z.ZodType<NitroComposeFlowFlowStep> = z.lazy(() => z.object({
     action_name: z.string().describe("Stable existing-node identity; preserve exactly.").optional(),
-    key: z.string().describe("Retained new-node identity.").optional(),
-    type: z.enum(["email", "sms", "wait", "split", "emit_event", "webhook", "subscribe", "unsubscribe"]),
+    key: z.string().optional(),
+    type: z.enum(["email", "sms", "wait", "split", "random_split", "classify_reply", "reply", "emit_event", "webhook", "subscribe", "unsubscribe"]),
     subject: z.string().optional(),
     body: z.string().optional(),
     content_format: z.enum(["designed", "plain"]).optional(),
@@ -111,19 +117,27 @@ const NitroComposeFlowFlowStepSchema: z.ZodType<NitroComposeFlowFlowStep> = z.la
     from_name: z.string().optional(),
     from_email: z.string().optional(),
     reply_to: z.string().optional(),
-    design: z.object({}).passthrough().describe("Email {sections, theme} design.").optional(),
+    design: z.object({}).passthrough().optional(),
     if_version: z.number().int().describe("Required for existing email edits.").optional(),
     template_version: z.number().int().optional(),
-    bcc: z.string().describe("BCC for a new-flow email only.").optional(),
-    duration: z.number().int().describe("Wait seconds.").optional(),
-    send_at: z.string().regex(new RegExp("^(?:[01][0-9]|2[0-3]):[0-5][0-9]$")).describe("Local HH:MM after delay; allows duration 0.").optional(),
-    time_zone: z.string().describe("IANA; defaults to account, pinned on approval.").optional(),
-    event_name: z.string().describe("Lowercase underscore event name.").optional(),
-    event_data: z.object({}).passthrough().describe("Static emitted-event data.").optional(),
-    event_data_keys: z.array(z.string()).describe("Frozen non-secret keys; copy next_call.").optional(),
-    forward_event_data: z.boolean().default(false).describe("Forward triggering event data."),
-    url: z.string().describe("Webhook URL; supports merge tags.").optional(),
-    endpoint_configured: z.boolean().describe("Frozen; copy next_call.").optional(),
+    reply_all: z.boolean().default(false),
+    cc: z.array(z.string()).optional(),
+    bcc: z.union([
+      z.string(),
+      z.array(z.string())
+    ]).optional(),
+    categories: z.array(z.object({}).passthrough()).optional(),
+    paths: z.array(z.object({}).passthrough()).optional(),
+    branches: z.object({}).passthrough().optional(),
+    duration: z.number().int().optional(),
+    send_at: z.string().regex(new RegExp("^(?:[01][0-9]|2[0-3]):[0-5][0-9]$")).optional(),
+    time_zone: z.string().optional(),
+    event_name: z.string().optional(),
+    event_data: z.object({}).passthrough().optional(),
+    event_data_keys: z.array(z.string()).optional(),
+    forward_event_data: z.boolean().default(false),
+    url: z.string().optional(),
+    endpoint_configured: z.boolean().optional(),
     method: z.enum(["POST", "PUT"]).default("POST"),
     headers: z.object({}).passthrough().optional(),
     filters: z.union([
@@ -244,6 +258,11 @@ export const nitrosendToolSchemas = {
     trigger: z.object({
       event: z.string().describe("Built-in or lowercase underscore event name.").optional(),
       exit_events: z.array(z.string().regex(new RegExp("^[a-z][a-z0-9_]{0,63}$"))).max(20).describe("Stop future steps on new matching events; pinned.").optional(),
+      stop_on_reply: z.boolean().default(false).describe("Requires monitored receiving."),
+      reply_source: z.object({
+        type: z.enum(["any", "flow", "campaign", "message"]),
+        id: z.number().int().gte(1).optional()
+      }).strict().describe("Match replies to an owned source.").optional(),
       action_name: z.string().describe("Preserve trigger identity.").optional(),
       segment_id: z.number().int().optional(),
       contact_list_id: z.number().int().optional(),
@@ -279,7 +298,9 @@ export const nitrosendToolSchemas = {
     resume_mode: z.enum(["new_contacts_only", "continue_existing"]).describe("For paused flows: stop current journeys, or restart waits and continue gradually.").optional(),
     confirm_send_to_all: z.boolean().describe("Explicit all_contacts confirmation for live/schedule.").optional(),
     confirm: z.boolean().describe("Required for delete.").optional(),
-    idempotency_key: z.string().describe("Campaign-live retry key; reuse only for the same send.").optional()
+    idempotency_key: z.string().describe("Campaign-live retry key; reuse only for the same send.").optional(),
+    versions: z.array(z.object({}).passthrough()).describe("See nitro_review_delivery versions.").optional(),
+    winner: z.object({}).passthrough().optional()
   }).strict(),
   nitro_define_segment: z.object({
     name: z.string().optional(),
@@ -355,6 +376,9 @@ export const nitrosendToolSchemas = {
     subject: z.string().optional(),
     body: z.string().optional(),
     html: z.string().optional(),
+    cc: z.array(z.string()).max(10).optional(),
+    bcc: z.array(z.string()).max(10).optional(),
+    reply_all: z.boolean().default(false),
     attachment_refs: z.array(z.string()).max(10).describe("Signed upload references").optional()
   }).strict(),
   nitro_inbox_action: z.object({
@@ -376,8 +400,9 @@ export const nitrosendToolSchemas = {
     }).strict().describe("File metadata for reserve_attachment_upload").optional(),
     reply_context_digest: z.string().describe("From nitro_inbox get_item/get_thread; required for reply commands").optional(),
     to: z.array(z.string()).max(10).describe("Compose recipients, or test recipients for send_reply_test (first 5)").optional(),
-    cc: z.array(z.string()).max(10).describe("Compose only").optional(),
-    bcc: z.array(z.string()).max(10).describe("Compose only").optional(),
+    cc: z.array(z.string()).max(10).describe("Overrides reply-all Cc").optional(),
+    bcc: z.array(z.string()).max(10).optional(),
+    reply_all: z.boolean().default(false).describe("Copy visible thread participants, excluding self"),
     idempotency_key: z.string().describe("Required").optional(),
     dry_run: z.boolean().default(false).describe("Validate compose or reply without sending"),
     classification: z.enum(["spam", "not_spam"]).optional(),
@@ -551,6 +576,8 @@ export const nitrosendToolSchemas = {
     from_email: z.string().describe("Verified brand sender address").optional(),
     from_name: z.string().describe("Sender name").optional(),
     reply_to: z.string().describe("Reply address").optional(),
+    cc: z.array(z.string()).max(10).optional(),
+    bcc: z.array(z.string()).max(10).optional(),
     headers: z.object({}).passthrough().refine(value => Object.keys(value).length <= 20, { message: "At most 20 properties" }).describe("Email headers; reserved names rejected").optional(),
     tags: z.object({}).passthrough().refine(value => Object.keys(value).length <= 20, { message: "At most 20 properties" }).describe("Email tags").optional(),
     idempotency_key: z.string().min(1).describe("Reuse only for an exact retry"),

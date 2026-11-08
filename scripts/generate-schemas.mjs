@@ -36,6 +36,11 @@ function schemaToTypeScript(schema, refs = new Map()) {
   if (!schema || typeof schema !== 'object') {
     throw new Error(`Invalid schema fragment: ${JSON.stringify(schema)}`);
   }
+  // A type union ({ type: ["string", "array"] }) is a oneOf of single types.
+  if (Array.isArray(schema.type)) {
+    const { type, ...rest } = schema;
+    return schemaToTypeScript({ oneOf: type.map(single => ({ ...rest, type: single })) }, refs);
+  }
   assertKnown(schema);
 
   if (typeof schema.$ref === 'string') {
@@ -94,6 +99,11 @@ function schemaToTypeScript(schema, refs = new Map()) {
 function schemaToZod(schema, refs = new Map()) {
   if (!schema || typeof schema !== 'object') {
     throw new Error(`Invalid schema fragment: ${JSON.stringify(schema)}`);
+  }
+  // A type union ({ type: ["string", "array"] }) is a oneOf of single types.
+  if (Array.isArray(schema.type)) {
+    const { type, ...rest } = schema;
+    return schemaToZod({ oneOf: type.map(single => ({ ...rest, type: single })) }, refs);
   }
   assertKnown(schema);
 
